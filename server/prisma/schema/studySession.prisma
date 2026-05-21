@@ -1,0 +1,20 @@
+model StudySession {
+    id Int @id @default(autoincrement())
+
+    title       String         @db.VarChar(150)
+    description String
+    date        DateTime
+    duration    Int
+    difficulty  DifficultyLevel
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updateAt  DateTime @default(now()) @map("update_at")
+
+    userId Int  @map("user_id")
+    user   User @relation(fields: [userId], references: [id])
+
+    Notes       Note[]
+    sessionTags SessionTag[]
+
+    @@map("study_sessions")
+}

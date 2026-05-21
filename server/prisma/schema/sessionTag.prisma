@@ -1,0 +1,11 @@
+model SessionTag {
+
+    studySessionId Int          @map("study_session_id")
+    studySession   StudySession @relation(fields: [studySessionId], references: [id])
+
+    tagId Int @map("tag_id")
+    tag   Tag @relation(fields: [tagId], references: [id])
+
+    @@id([studySessionId, tagId])
+    @@map("session_tags")
+}

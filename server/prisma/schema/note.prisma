@@ -1,0 +1,13 @@
+model Note {
+    id Int @id @default(autoincrement())
+
+    title String @db.VarChar(100)
+    text  String
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    studySessionId Int          @map("study_session_id")
+    studySession   StudySession @relation(fields: [studySessionId], references: [id])
+
+    @@map("notes")
+}

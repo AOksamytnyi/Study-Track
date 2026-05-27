@@ -44,7 +44,9 @@ export async function updateSession(req: Request, res: Response) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const session = await prisma.studySession.findUnique({ where: { id: sessionId } });
+  const session = await prisma.studySession.findUnique({
+    where: { id: sessionId },
+  });
 
   if (!session || session.userId !== req.userId) {
     return res.status(404).json({ message: "Session not found" });
@@ -56,4 +58,28 @@ export async function updateSession(req: Request, res: Response) {
   });
 
   return res.json(updatedSession);
+}
+
+export async function deleteSession(req: Request, res: Response) {
+  const id = req.params.id;
+
+  const sessionId = parseInt(id as string);
+
+  if (isNaN(sessionId)) {
+    return res.status(400).json({ message: "Invalid id" });
+  }
+
+  const session = await prisma.studySession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session || session.userId !== req.userId) {
+    return res.status(404).json({ message: "Session not found" });
+  }
+
+ await prisma.studySession.delete({where: {id: sessionId}})
+
+  return res.status(200).json({
+    message: `session ${session.title} deleted`,
+  })
 }

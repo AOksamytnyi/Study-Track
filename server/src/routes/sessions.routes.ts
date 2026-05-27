@@ -1,14 +1,15 @@
 import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.middleware'
-import { createSession, getSessions, updateSession } from '../controllers/sessions.contoller'
+import { createSession, deleteSession, getSessions, updateSession } from '../controllers/sessions.contoller'
 import { asyncHandler } from '../utils/async-handler'
 
-const router = Router()
+const sessionsRouter = Router()
 
-router.use(authMiddleware) // применится ко всем роутам ниже
+sessionsRouter.use(authMiddleware) // применится ко всем роутам ниже
 
-router.post('/', asyncHandler(createSession))
-router.get('/', asyncHandler(getSessions))
-router.patch('/:id', asyncHandler(updateSession))
+sessionsRouter.post('/', asyncHandler(createSession))
+sessionsRouter.get('/', asyncHandler(getSessions))
+sessionsRouter.patch('/:id', asyncHandler(updateSession))
+sessionsRouter.delete('/:id', asyncHandler(deleteSession))
 
-export default router
+export default sessionsRouter

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.middleware'
-import { createSession, deleteSession, getSessions, updateSession } from '../controllers/sessions.contoller'
+import { createSession, deleteSession, getSessions, updateSession } from '../controllers/sessions.controller'
 import { asyncHandler } from '../utils/async-handler'
 
 const sessionsRouter = Router()

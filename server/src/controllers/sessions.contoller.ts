@@ -1,8 +1,18 @@
 import prisma from "../lib/prisma";
 import { Request, Response } from "express";
+import {
+  createSessionSchema,
+  updateSessionSchema,
+} from "../schemas/session.schema";
 
 export async function createSession(req: Request, res: Response) {
-  const { title, description, date, duration, difficulty } = req.body;
+  const result = createSessionSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ message: result.error.issues });
+  }
+
+  const { title, description, date, duration, difficulty } = result.data;
 
   if (!title || !description || !date || !duration || !difficulty) {
     return res.status(400).json({ message: "All fields are required" });
@@ -38,7 +48,13 @@ export async function updateSession(req: Request, res: Response) {
     return res.status(400).json({ message: "Invalid id" });
   }
 
-  const { title, description, date, duration, difficulty } = req.body;
+  const result = updateSessionSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ message: result.error.issues });
+  }
+
+  const { title, description, date, duration, difficulty } = result.data;
 
   if (!title || !description || !date || !duration || !difficulty) {
     return res.status(400).json({ message: "All fields are required" });
@@ -77,9 +93,9 @@ export async function deleteSession(req: Request, res: Response) {
     return res.status(404).json({ message: "Session not found" });
   }
 
- await prisma.studySession.delete({where: {id: sessionId}})
+  await prisma.studySession.delete({ where: { id: sessionId } });
 
   return res.status(200).json({
     message: `session ${session.title} deleted`,
-  })
+  });
 }

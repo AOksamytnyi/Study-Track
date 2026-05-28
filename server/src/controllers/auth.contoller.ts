@@ -13,10 +13,6 @@ export async function register(req: Request, res: Response) {
 
   const { email, password, username } = result.data;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
-  }
-
   if (!process.env.JWT_SECRET) {
     return res.status(500).json({ message: "JWT secret is not configured" });
   }
@@ -47,10 +43,6 @@ export async function login(req: Request, res: Response) {
   }
 
   const { email, password } = result.data;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are empty" });
-  }
 
   const user = await prisma.user.findUnique({ where: { email } });
 

@@ -14,10 +14,6 @@ export async function createSession(req: Request, res: Response) {
 
   const { title, description, date, duration, difficulty } = result.data;
 
-  if (!title || !description || !date || !duration || !difficulty) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
   const session = await prisma.studySession.create({
     data: {
       title,
@@ -56,9 +52,6 @@ export async function updateSession(req: Request, res: Response) {
 
   const { title, description, date, duration, difficulty } = result.data;
 
-  if (!title || !description || !date || !duration || !difficulty) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
 
   const session = await prisma.studySession.findUnique({
     where: { id: sessionId },

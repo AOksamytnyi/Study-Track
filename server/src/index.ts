@@ -1,11 +1,8 @@
 import { app } from "./app";
-import dotenv from 'dotenv'
-import path from 'path'
-
-dotenv.config({ path: path.join(__dirname, '../.env') }) 
+import { env } from "./config/env";
 
 async function startServer() {
-  app.listen(process.env.PORT, () => {
+  app.listen(env.PORT, () => {
     console.log(`Server running on http://localhost:${process.env.PORT}`);
   });
 }

@@ -1,6 +1,7 @@
 import prisma from "../lib/prisma";
 import { Request, Response } from "express";
 import { loginSchema, registerSchema } from "../schemas/auth.schema";
+import { env } from "../config/env";
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -13,7 +14,7 @@ export async function register(req: Request, res: Response) {
 
   const { email, password, username } = result.data;
 
-  if (!process.env.JWT_SECRET) {
+  if (!env.JWT_SECRET) {
     return res.status(500).json({ message: "JWT secret is not configured" });
   }
 
@@ -28,7 +29,7 @@ export async function register(req: Request, res: Response) {
     data: { email, passwordHash, username },
   });
 
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+  const token = jwt.sign({ userId: user.id }, env.JWT_SECRET!, {
     expiresIn: "7d",
   });
 
@@ -56,7 +57,7 @@ export async function login(req: Request, res: Response) {
     return res.status(401).json({ message: "Email or password are incorrect" });
   }
 
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+  const token = jwt.sign({ userId: user.id }, env.JWT_SECRET!, {
     expiresIn: "7d",
   });
 

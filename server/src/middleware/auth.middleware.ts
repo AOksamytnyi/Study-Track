@@ -12,7 +12,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   const token = authHeader.split(' ')[1]
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET) as { userId: string }
+    const payload = jwt.verify(token, process.env.JWT_SECRET) as { userId: number }
     req.userId = payload.userId
     next()
 

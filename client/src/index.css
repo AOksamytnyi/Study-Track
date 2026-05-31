@@ -1,1 +1,12 @@
+@import "@fontsource/roboto";
+@import "@fontsource/inter";
+@import "@fontsource/nunito";
+@import "@fontsource/poppins";
 @import "tailwindcss";
+
+@theme {
+  --font-roboto: "Roboto", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --font-nunito: "Nunito", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+}

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Tag } from "./Tag";
 
 export type SessionTag = {
@@ -18,9 +19,9 @@ type SessionCardProps = {
 
 export default function SessionCard(props: SessionCardProps) {
   return (
-    <article
-      key={props.id}
-      className="w-90.75 h-50 flex flex-col gap-2.5 rounded-lg shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)] p-3.75 font-roboto">
+    <Link
+      to={`/sessions/${props.id}`}
+      className="w-90.75 h-50 flex flex-col gap-2.5 rounded-lg bg-white shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)] p-3.75 font-roboto transition hover:-translate-y-0.5 hover:shadow-[0px_6px_18px_rgba(0,0,0,0.08)]">
       <div className="flex justify-between">
         <div className="flex flex-col gap-px">
           <h2 className="text-2xl text-slate-700 font-medium">{props.title}</h2>
@@ -63,6 +64,6 @@ export default function SessionCard(props: SessionCardProps) {
           <div className="text-sm text-neutral-500 font-light">no tags</div>
         )}
       </div>
-    </article>
+    </Link>
   );
 }

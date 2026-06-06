@@ -1,5 +1,5 @@
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import type { Difficulty } from "../api/session";
+import { type Difficulty } from "../api/session";
 import { useCreateSession } from "../hooks/useSessions";
 
 type Inputs = {

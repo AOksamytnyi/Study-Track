@@ -1,8 +1,7 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { registerUser } from "../api/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { useState } from "react";
+import { useRegister } from "../hooks/useAuth";
 
 type Inputs = {
   email: string;
@@ -11,7 +10,7 @@ type Inputs = {
 };
 
 export default function Register() {
-  const [loading, setLoading] = useState(false);
+  const registerMutation = useRegister();
   const setAuth = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const {
@@ -21,14 +20,11 @@ export default function Register() {
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      setLoading(true);
-      const response = await registerUser(data);
+      const response = await registerMutation.mutateAsync(data);
       setAuth(response.token, response.user);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -86,10 +82,10 @@ export default function Register() {
             </div>
 
             <button
-              disabled={loading}
+              disabled={registerMutation.isPending}
               type="submit"
               className="bg-zinc-950 text-white py-5 px-9 rounded-md mt-3 disabled:opacity-50">
-              Register
+              {registerMutation.isPending ? "Creating..." : "Register"}
             </button>
           </form>
 

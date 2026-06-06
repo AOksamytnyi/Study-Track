@@ -12,6 +12,7 @@ type SessionCardProps = {
   date: string;
   description: string;
   tag: SessionTag | null;
+  difficulty: "easy" | "medium" | "hard";
   comments: number;
 };
 
@@ -20,15 +21,32 @@ export default function SessionCard(props: SessionCardProps) {
     <article
       key={props.id}
       className="w-90.75 h-50 flex flex-col gap-2.5 rounded-lg shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)] p-3.75 font-roboto">
-      <div className="flex flex-col gap-px">
-        <h2 className="text-2xl text-slate-700 font-medium">{props.title}</h2>
-        <div className="flex gap-3 items-center">
-          <img src="/clock unfill.svg" alt="" />
-          <p className="text-sm text-neutral-500 font-light">{props.date}</p>
+      <div className="flex justify-between">
+        <div className="flex flex-col gap-px">
+          <h2 className="text-2xl text-slate-700 font-medium">{props.title}</h2>
+          <div className="flex gap-3 items-center">
+            <img src="/clock unfill.svg" alt="" />
+            <p className="text-sm text-neutral-500 font-light">{props.date}</p>
+          </div>
+        </div>
+        <div
+          className={`w-12 h-5 relative rounded-[50px] flex justify-center items-center`}
+          style={{
+            backgroundColor: `${
+              props.difficulty === "easy"
+                ? "#5D7285"
+                : props.difficulty === "medium"
+                  ? "#7C6F42"
+                  : "#9B4A4A"
+            }`,
+          }}>
+          <span className="font-bold uppercase text-[10px] text-white">
+            {props.difficulty}
+          </span>
         </div>
       </div>
 
-      <p className="text-base text-neutral-500 font-light">
+      <p className="text-base block max-w-[300px] wrap-break-word text-neutral-500 font-light">
         {props.description}
       </p>
 

@@ -1,5 +1,6 @@
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import { createSession, type Difficulty } from "../api/session";
+import { type Difficulty } from "../api/session";
+import { useCreateSession } from "../hooks/useSessions";
 
 type Inputs = {
   title: string;
@@ -23,6 +24,7 @@ const difficultyOptions: { value: Difficulty; label: string }[] = [
 const today = new Date().toISOString().split("T")[0];
 
 export function AddSessionForm({ onCancel, onCreated }: AddSessionFormProps) {
+  const createSessionMutation = useCreateSession();
   const {
     register,
     control,
@@ -42,7 +44,7 @@ export function AddSessionForm({ onCancel, onCreated }: AddSessionFormProps) {
   const selectedDifficulty = useWatch({ control, name: "difficulty" });
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    await createSession({
+    await createSessionMutation.mutateAsync({
       ...data,
       duration: Number(data.duration),
     });
@@ -161,7 +163,9 @@ export function AddSessionForm({ onCancel, onCreated }: AddSessionFormProps) {
           disabled={isSubmitting}
           type="submit"
           className="h-9 flex-1 rounded-md bg-zinc-950 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-          {isSubmitting ? "Saving..." : "Add session"}
+          {isSubmitting || createSessionMutation.isPending
+            ? "Saving..."
+            : "Add session"}
         </button>
       </div>
     </form>

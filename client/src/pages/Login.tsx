@@ -1,8 +1,7 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { login } from "../api/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { useState } from "react";
+import { useLogin } from "../hooks/useAuth";
 
 type Inputs = {
   email: string;
@@ -10,7 +9,7 @@ type Inputs = {
 };
 
 export default function Login() {
-  const [loading, setLoading] = useState(false);
+  const loginMutation = useLogin();
   const setAuth = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const {
@@ -20,14 +19,11 @@ export default function Login() {
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      setLoading(true);
-      const response = await login(data);
+      const response = await loginMutation.mutateAsync(data);
       setAuth(response.token, response.user);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -75,10 +71,10 @@ export default function Login() {
             </div>
 
             <button
-              disabled={loading}
+              disabled={loginMutation.isPending}
               type="submit"
               className="bg-zinc-950 text-white py-5 px-9 rounded-md">
-              Login
+              {loginMutation.isPending ? "Logging in..." : "Login"}
             </button>
           </form>
 

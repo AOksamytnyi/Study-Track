@@ -10,6 +10,15 @@ export function useSessions() {
   });
 }
 
+export function useSession(id: number | null) {
+  return useQuery({
+    queryKey: sessionsQueryKey,
+    queryFn: getSessions,
+    enabled: id !== null,
+    select: (sessions) => sessions.find((session) => session.id === id),
+  });
+}
+
 export function useCreateSession() {
   const queryClient = useQueryClient();
 
@@ -43,5 +52,4 @@ export function useDeleteSession(){
     },
   });
 }
-
 

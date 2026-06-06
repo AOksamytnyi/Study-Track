@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Tag } from "./Tag";
 
 export type SessionTag = {
@@ -18,19 +19,23 @@ type SessionCardProps = {
 
 export default function SessionCard(props: SessionCardProps) {
   return (
-    <article
-      key={props.id}
-      className="w-90.75 h-50 flex flex-col gap-2.5 rounded-lg shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)] p-3.75 font-roboto">
-      <div className="flex justify-between">
-        <div className="flex flex-col gap-px">
-          <h2 className="text-2xl text-slate-700 font-medium">{props.title}</h2>
-          <div className="flex gap-3 items-center">
-            <img src="/clock unfill.svg" alt="" />
-            <p className="text-sm text-neutral-500 font-light">{props.date}</p>
+    <Link
+      to={`/sessions/${props.id}`}
+      className="w-90.75 h-50 flex flex-col gap-2.5 overflow-hidden rounded-lg bg-white shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)] p-3.75 font-roboto transition hover:-translate-y-0.5 hover:shadow-[0px_6px_18px_rgba(0,0,0,0.08)]">
+      <div className="flex justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-px">
+          <h2 className="truncate text-2xl text-slate-700 font-medium">
+            {props.title}
+          </h2>
+          <div className="flex min-w-0 items-center gap-3">
+            <img src="/clock unfill.svg" alt="" className="shrink-0" />
+            <p className="truncate text-sm text-neutral-500 font-light">
+              {props.date}
+            </p>
           </div>
         </div>
         <div
-          className={`w-12 h-5 relative rounded-[50px] flex justify-center items-center`}
+          className={`w-12 h-5 relative shrink-0 rounded-[50px] flex justify-center items-center`}
           style={{
             backgroundColor: `${
               props.difficulty === "easy"
@@ -46,13 +51,13 @@ export default function SessionCard(props: SessionCardProps) {
         </div>
       </div>
 
-      <p className="text-base block max-w-[300px] wrap-break-word text-neutral-500 font-light">
+      <p className="block min-h-0 max-w-full flex-1 overflow-hidden break-words text-base text-neutral-500 font-light [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
         {props.description}
       </p>
 
-      <div className="flex justify-between w-full mt-auto">
-        <div className="flex gap-2.5 items-center">
-          <img src="/message 3.svg" alt="" />
+      <div className="flex justify-between w-full mt-auto gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <img src="/message 3.svg" alt="" className="shrink-0" />
           <p className="text-sm text-neutral-500 font-light">
             {props.comments}
           </p>
@@ -60,9 +65,11 @@ export default function SessionCard(props: SessionCardProps) {
         {props.tag ? (
           <Tag title={props.tag.title} color={props.tag.color} />
         ) : (
-          <div className="text-sm text-neutral-500 font-light">no tags</div>
+          <div className="shrink-0 text-sm text-neutral-500 font-light">
+            no tags
+          </div>
         )}
       </div>
-    </article>
+    </Link>
   );
 }

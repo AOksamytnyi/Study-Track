@@ -53,7 +53,7 @@ export default function Sessions() {
               description={session.description}
               comments={0}
               difficulty={session.difficulty}
-              tag={null}
+              tags={session.tags}
             />
           ))
         )}

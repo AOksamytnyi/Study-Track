@@ -1,23 +1,21 @@
 import { Link } from "react-router-dom";
 import { Tag } from "./Tag";
-
-export type SessionTag = {
-  id: number;
-  title: string;
-  color: string;
-};
+import type { SessionTag } from "../api/session";
 
 type SessionCardProps = {
   id: number;
   title: string;
   date: string;
   description: string;
-  tag: SessionTag | null;
+  tags: SessionTag[];
   difficulty: "easy" | "medium" | "hard";
   comments: number;
 };
 
 export default function SessionCard(props: SessionCardProps) {
+  const visibleTags = props.tags.slice(0, 2);
+  const hiddenTagsCount = props.tags.length - visibleTags.length;
+
   return (
     <Link
       to={`/sessions/${props.id}`}
@@ -62,8 +60,17 @@ export default function SessionCard(props: SessionCardProps) {
             {props.comments}
           </p>
         </div>
-        {props.tag ? (
-          <Tag title={props.tag.title} color={props.tag.color} />
+        {props.tags.length > 0 ? (
+          <div className="flex min-w-0 flex-wrap justify-end gap-1.5 overflow-hidden">
+            {visibleTags.map((tag) => (
+              <Tag key={tag.id} title={tag.name} />
+            ))}
+            {hiddenTagsCount > 0 && (
+              <span className="text-sm font-light text-neutral-500">
+                +{hiddenTagsCount}
+              </span>
+            )}
+          </div>
         ) : (
           <div className="shrink-0 text-sm text-neutral-500 font-light">
             no tags

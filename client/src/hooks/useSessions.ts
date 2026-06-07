@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createSession, createSessionTag, deleteSession, getSessions, updateSession, type CreateSessionTagDto, type UpdateSessionDto } from "../api/session";
+import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessions, updateSession, type CreateSessionTagDto, type UpdateSessionDto } from "../api/session";
 
 export const sessionsQueryKey = ["sessions"] as const;
 
@@ -64,6 +64,23 @@ export function useCreateSessionTag() {
       sessionId: number;
       data: CreateSessionTagDto;
     }) => createSessionTag(sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+    },
+  });
+}
+
+export function useDeleteSessionTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      tagId,
+    }: {
+      sessionId: number;
+      tagId: number;
+    }) => deleteSessionTag(sessionId, tagId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
     },

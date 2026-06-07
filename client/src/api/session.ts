@@ -71,3 +71,7 @@ export async function createSessionTag(
   );
   return response.data;
 }
+
+export async function deleteSessionTag(sessionId: number, tagId: number) {
+  await apiClient.delete(`/sessions/${sessionId}/tags/${tagId}`);
+}

@@ -146,3 +146,64 @@ export async function createSessionTag(req: Request, res: Response) {
 
   return res.status(201).json(tag);
 }
+
+export async function deleteSessionTag(req: Request, res: Response) {
+  const sessionId = parseInt(req.params.id as string);
+  const tagId = parseInt(req.params.tagId as string);
+
+  if (isNaN(sessionId) || isNaN(tagId)) {
+    return res.status(400).json({ message: "Invalid id" });
+  }
+
+  const session = await prisma.studySession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session || session.userId !== req.userId) {
+    return res.status(404).json({ message: "Session not found" });
+  }
+
+  const tag = await prisma.tag.findUnique({
+    where: { id: tagId },
+  });
+
+  if (!tag || tag.userId !== req.userId) {
+    return res.status(404).json({ message: "Tag not found" });
+  }
+
+  const sessionTag = await prisma.sessionTag.findUnique({
+    where: {
+      studySessionId_tagId: {
+        studySessionId: sessionId,
+        tagId,
+      },
+    },
+  });
+
+  if (!sessionTag) {
+    return res.status(404).json({ message: "Tag not found" });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.sessionTag.delete({
+      where: {
+        studySessionId_tagId: {
+          studySessionId: sessionId,
+          tagId,
+        },
+      },
+    });
+
+    const remainingTagLinks = await tx.sessionTag.count({
+      where: { tagId },
+    });
+
+    if (remainingTagLinks === 0) {
+      await tx.tag.delete({
+        where: { id: tagId },
+      });
+    }
+  });
+
+  return res.status(204).send();
+}

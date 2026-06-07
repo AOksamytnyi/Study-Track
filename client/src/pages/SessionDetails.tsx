@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useCreateSessionTag, useSession, useUpdateSession } from "../hooks/useSessions";
+import { useCreateSessionTag, useDeleteSessionTag, useSession, useUpdateSession } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
 import { Tag } from "../components/Tag";
 
@@ -40,6 +40,7 @@ export default function SessionDetails() {
   const { data: session, isLoading } = useSession(sessionId);
   const updateSession = useUpdateSession();
   const createSessionTag = useCreateSessionTag();
+  const deleteSessionTag = useDeleteSessionTag();
   const [editingField, setEditingField] = useState<
     "title" | "description" | "difficulty" | "duration" | null
   >(null);
@@ -48,6 +49,7 @@ export default function SessionDetails() {
   const [durationDraft, setDurationDraft] = useState<number>(0);
   const [tagName, setTagName] = useState("");
   const [tagError, setTagError] = useState<string | null>(null);
+  const [deletingTagId, setDeletingTagId] = useState<number | null>(null);
 
   if (sessionId === null) {
     return (
@@ -79,6 +81,7 @@ export default function SessionDetails() {
   const notes = ["Note 1 (title)", "Note 2 (title)", "Note 3 (title)"];
   const isSaving = updateSession.isPending;
   const isCreatingTag = createSessionTag.isPending;
+  const isDeletingTag = deleteSessionTag.isPending;
 
   const saveTitle = async () => {
     const title = titleDraft.trim();
@@ -169,6 +172,23 @@ export default function SessionDetails() {
     } catch (error) {
       console.error(error);
       setTagError("Не удалось добавить тэг. Проверь, что сервер обновлён.");
+    }
+  };
+
+  const handleDeleteTag = async (tagId: number) => {
+    setTagError(null);
+    setDeletingTagId(tagId);
+
+    try {
+      await deleteSessionTag.mutateAsync({
+        sessionId: session.id,
+        tagId,
+      });
+    } catch (error) {
+      console.error(error);
+      setTagError("Не удалось удалить тэг. Попробуй ещё раз.");
+    } finally {
+      setDeletingTagId(null);
     }
   };
 
@@ -342,7 +362,14 @@ export default function SessionDetails() {
           </h3>
           <div className="flex flex-wrap gap-[15px] py-3">
             {session.tags.length > 0 ? (
-              session.tags.map((tag) => <Tag key={tag.id} title={tag.name} />)
+              session.tags.map((tag) => (
+                <Tag
+                  key={tag.id}
+                  title={tag.name}
+                  disabled={isDeletingTag && deletingTagId === tag.id}
+                  onDelete={() => handleDeleteTag(tag.id)}
+                />
+              ))
             ) : (
               <span className="text-sm font-light text-[#6f6f70]">no tags</span>
             )}

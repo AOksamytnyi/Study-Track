@@ -2,6 +2,7 @@ import prisma from "../lib/prisma";
 import { Request, Response } from "express";
 import {
   createSessionSchema,
+  tagSchema,
   updateSessionSchema,
 } from "../schemas/session.schema";
 
@@ -31,6 +32,13 @@ export async function createSession(req: Request, res: Response) {
 export async function getSessions(req: Request, res: Response) {
   const sessions = await prisma.studySession.findMany({
     where: { userId: req.userId },
+    include: {
+      sessionTags: {
+        include: {
+          tag: true,
+        },
+      },
+    },
   });
 
   return res.json(sessions);
@@ -86,9 +94,55 @@ export async function deleteSession(req: Request, res: Response) {
     return res.status(404).json({ message: "Session not found" });
   }
 
+  await prisma.sessionTag.deleteMany({
+    where: { studySessionId: sessionId },
+  });
+
   await prisma.studySession.delete({ where: { id: sessionId } });
 
   return res.status(200).json({
     message: `session ${session.title} deleted`,
   });
+}
+
+export async function createSessionTag(req: Request, res: Response) {
+  const sessionId = parseInt(req.params.id as string);
+
+  if (isNaN(sessionId)) {
+    return res.status(400).json({ message: "Invalid id" });
+  }
+
+  const result = tagSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ message: result.error.issues });
+  }
+
+  const session = await prisma.studySession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session || session.userId !== req.userId) {
+    return res.status(404).json({ message: "Session not found" });
+  }
+
+  const tag = await prisma.$transaction(async (tx) => {
+    const createdTag = await tx.tag.create({
+      data: {
+        name: result.data.name,
+        userId: req.userId,
+      },
+    });
+
+    await tx.sessionTag.create({
+      data: {
+        studySessionId: sessionId,
+        tagId: createdTag.id,
+      },
+    });
+
+    return createdTag;
+  });
+
+  return res.status(201).json(tag);
 }

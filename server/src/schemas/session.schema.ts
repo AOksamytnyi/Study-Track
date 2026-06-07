@@ -9,3 +9,7 @@ export const createSessionSchema = z.object({
 })
 
 export const updateSessionSchema = createSessionSchema.partial()
+
+export const tagSchema = z.object({
+    name: z.string().min(1).max(20)
+})

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useSession, useUpdateSession } from "../hooks/useSessions";
+import { useCreateSessionTag, useSession, useUpdateSession } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
+import { Tag } from "../components/Tag";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -38,12 +39,15 @@ export default function SessionDetails() {
   const sessionId = getSessionId(id);
   const { data: session, isLoading } = useSession(sessionId);
   const updateSession = useUpdateSession();
+  const createSessionTag = useCreateSessionTag();
   const [editingField, setEditingField] = useState<
     "title" | "description" | "difficulty" | "duration" | null
   >(null);
   const [titleDraft, setTitleDraft] = useState("");
   const [descriptionDraft, setDescriptionDraft] = useState("");
   const [durationDraft, setDurationDraft] = useState<number>(0);
+  const [tagName, setTagName] = useState("");
+  const [tagError, setTagError] = useState<string | null>(null);
 
   if (sessionId === null) {
     return (
@@ -74,6 +78,7 @@ export default function SessionDetails() {
 
   const notes = ["Note 1 (title)", "Note 2 (title)", "Note 3 (title)"];
   const isSaving = updateSession.isPending;
+  const isCreatingTag = createSessionTag.isPending;
 
   const saveTitle = async () => {
     const title = titleDraft.trim();
@@ -142,6 +147,29 @@ export default function SessionDetails() {
     setDescriptionDraft(session.description);
     setDurationDraft(session.duration);
     setEditingField(null);
+  };
+
+  const handleCreateTag = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const name = tagName.trim();
+
+    if (!name) {
+      return;
+    }
+
+    setTagError(null);
+
+    try {
+      await createSessionTag.mutateAsync({
+        sessionId: session.id,
+        data: { name },
+      });
+      setTagName("");
+    } catch (error) {
+      console.error(error);
+      setTagError("Не удалось добавить тэг. Проверь, что сервер обновлён.");
+    }
   };
 
   return (
@@ -312,11 +340,45 @@ export default function SessionDetails() {
           <h3 className="font-roboto font-bold text-2xl text-[#223759]">
             Tags
           </h3>
-          <div className="flex gap-[15px] py-3">
-            <span className="flex h-5 min-w-[50px] items-center justify-center rounded-[50px] border border-black bg-white px-3 text-[10px] leading-none text-black">
-              new
-            </span>
+          <div className="flex flex-wrap gap-[15px] py-3">
+            {session.tags.length > 0 ? (
+              session.tags.map((tag) => <Tag key={tag.id} title={tag.name} />)
+            ) : (
+              <span className="text-sm font-light text-[#6f6f70]">no tags</span>
+            )}
           </div>
+
+          <form
+            onSubmit={handleCreateTag}
+            className="mt-1 flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
+              New tag
+              <input
+                maxLength={20}
+                disabled={isCreatingTag}
+                value={tagName}
+                onChange={(event) => {
+                  setTagName(event.target.value);
+                  setTagError(null);
+                }}
+                placeholder="Tag name"
+                className="h-9 w-45 border-b border-[#e3f2f3] bg-transparent text-sm font-light normal-case text-[#223759] outline-none placeholder:text-[#6f6f70]/60 focus:border-[#223759] disabled:opacity-60"
+              />
+            </label>
+
+            <button
+              disabled={isCreatingTag || !tagName.trim()}
+              type="submit"
+              className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
+              {isCreatingTag ? "Adding..." : "Add tag"}
+            </button>
+          </form>
+
+          {tagError && (
+            <p className="mt-2 text-sm font-medium text-[#9B4A4A]">
+              {tagError}
+            </p>
+          )}
         </div>
 
         <div className="h-px bg-[#e3f2f3]" />

@@ -98,6 +98,10 @@ export async function deleteSession(req: Request, res: Response) {
     where: { studySessionId: sessionId },
   });
 
+  await prisma.note.deleteMany({
+    where: { studySessionId: sessionId },
+  });
+
   await prisma.studySession.delete({ where: { id: sessionId } });
 
   return res.status(200).json({

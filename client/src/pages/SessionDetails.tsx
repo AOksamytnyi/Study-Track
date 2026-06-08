@@ -3,6 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { useCreateSessionTag, useDeleteSessionTag, useSession, useUpdateSession } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
 import { Tag } from "../components/Tag";
+import { Note } from "../components/Note";
+import { NoteForm } from "../components/NoteForm";
+import { useCreateNote, useDeleteNote, useNotes, useUpdateNote } from "../hooks/useNotes";
+import type { Note as NoteModel } from "../api/note";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -38,9 +42,13 @@ export default function SessionDetails() {
   const { id } = useParams();
   const sessionId = getSessionId(id);
   const { data: session, isLoading } = useSession(sessionId);
+  const { data: notes = [], isLoading: areNotesLoading } = useNotes(sessionId);
   const updateSession = useUpdateSession();
   const createSessionTag = useCreateSessionTag();
   const deleteSessionTag = useDeleteSessionTag();
+  const createNote = useCreateNote();
+  const updateNote = useUpdateNote();
+  const deleteNote = useDeleteNote();
   const [editingField, setEditingField] = useState<
     "title" | "description" | "difficulty" | "duration" | null
   >(null);
@@ -50,6 +58,9 @@ export default function SessionDetails() {
   const [tagName, setTagName] = useState("");
   const [tagError, setTagError] = useState<string | null>(null);
   const [deletingTagId, setDeletingTagId] = useState<number | null>(null);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [noteError, setNoteError] = useState<string | null>(null);
 
   if (sessionId === null) {
     return (
@@ -75,13 +86,11 @@ export default function SessionDetails() {
   }
 
   const difficulty = difficultyStyles[session.difficulty];
-  const detailsDate = formatDate(session.date);
-  const noteDescription = session.description;
-
-  const notes = ["Note 1 (title)", "Note 2 (title)", "Note 3 (title)"];
   const isSaving = updateSession.isPending;
   const isCreatingTag = createSessionTag.isPending;
   const isDeletingTag = deleteSessionTag.isPending;
+  const isSavingNote =
+    createNote.isPending || updateNote.isPending || deleteNote.isPending;
 
   const saveTitle = async () => {
     const title = titleDraft.trim();
@@ -189,6 +198,53 @@ export default function SessionDetails() {
       setTagError("Не удалось удалить тэг. Попробуй ещё раз.");
     } finally {
       setDeletingTagId(null);
+    }
+  };
+
+  const handleCreateNote = async (values: { title: string; text: string }) => {
+    setNoteError(null);
+
+    try {
+      await createNote.mutateAsync({
+        ...values,
+        studySessionId: session.id,
+      });
+      setIsAddingNote(false);
+    } catch (error) {
+      console.error(error);
+      setNoteError("Не удалось создать нотатку. Попробуй ещё раз.");
+    }
+  };
+
+  const handleUpdateNote = async (
+    note: NoteModel,
+    values: { title: string; text: string },
+  ) => {
+    setNoteError(null);
+
+    try {
+      await updateNote.mutateAsync({
+        id: note.id,
+        data: values,
+      });
+      setEditingNoteId(null);
+    } catch (error) {
+      console.error(error);
+      setNoteError("Не удалось обновить нотатку. Попробуй ещё раз.");
+    }
+  };
+
+  const handleDeleteNote = async (note: NoteModel) => {
+    setNoteError(null);
+
+    try {
+      await deleteNote.mutateAsync({
+        id: note.id,
+        sessionId: session.id,
+      });
+    } catch (error) {
+      console.error(error);
+      setNoteError("Не удалось удалить нотатку. Попробуй ещё раз.");
     }
   };
 
@@ -410,35 +466,79 @@ export default function SessionDetails() {
 
         <div className="h-px bg-[#e3f2f3]" />
 
-        <div>
-          {notes.map((title) => (
-            <article key={title} className="relative min-h-[184px] pt-[25px]">
-              <div className="flex items-start justify-between gap-6">
-                <div className="max-w-[calc(100%-50px)]">
-                  <h3 className="text-[32px] font-medium leading-6 text-[#223759]">
-                    {title}
-                  </h3>
-                  <p className="mt-[18px] text-xl font-light leading-[1.291] text-[#6f6f70]">
-                    {noteDescription}
-                  </p>
+        <div className="pt-[25px]">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h3 className="font-roboto text-2xl font-bold text-[#223759]">
+              Notes
+            </h3>
+            <button
+              type="button"
+              disabled={isSavingNote}
+              onClick={() => {
+                setIsAddingNote(true);
+                setEditingNoteId(null);
+                setNoteError(null);
+              }}
+              className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
+              Add note
+            </button>
+          </div>
+
+          {isAddingNote && (
+            <div className="mb-2">
+              <NoteForm
+                key="new-note"
+                isSaving={isSavingNote}
+                submitLabel="Add note"
+                onSubmit={handleCreateNote}
+                onCancel={() => setIsAddingNote(false)}
+              />
+            </div>
+          )}
+
+          {noteError && (
+            <p className="mb-2 text-sm font-medium text-[#9B4A4A]">
+              {noteError}
+            </p>
+          )}
+
+          {areNotesLoading ? (
+            <p className="py-6 text-sm font-light text-[#6f6f70]">
+              Loading notes...
+            </p>
+          ) : notes.length === 0 && !isAddingNote ? (
+            <p className="py-6 text-sm font-light text-[#6f6f70]">no notes</p>
+          ) : (
+            notes.map((note) =>
+              editingNoteId === note.id ? (
+                <div key={note.id} className="border-t border-[#e3f2f3] py-4">
+                  <NoteForm
+                    key={`edit-note-${note.id}`}
+                    initialValues={{ title: note.title, text: note.text }}
+                    isSaving={isSavingNote}
+                    submitLabel="Update note"
+                    onSubmit={(values) => handleUpdateNote(note, values)}
+                    onCancel={() => setEditingNoteId(null)}
+                  />
                 </div>
-
-                <button
-                  type="button"
-                  aria-label={`Edit ${title}`}
-                  className="mt-[11px] size-6 shrink-0">
-                  <img src="/edit.svg" alt="" className="size-6" />
-                </button>
-              </div>
-
-              <div className="absolute bottom-[25px] right-0 flex items-center gap-3">
-                <img src="/clock unfill.svg" alt="" className="size-4" />
-                <p className="text-sm font-light leading-[1.291] text-[#6f6f70]">
-                  {detailsDate}
-                </p>
-              </div>
-            </article>
-          ))}
+              ) : (
+                <div key={note.id} className="border-t border-[#e3f2f3]">
+                  <Note
+                    title={note.title}
+                    text={note.text}
+                    date={formatDate(note.createdAt)}
+                    isSaving={isSavingNote}
+                    onEdit={() => {
+                      setEditingNoteId(note.id);
+                      setIsAddingNote(false);
+                      setNoteError(null);
+                    }}
+                    onDelete={() => handleDeleteNote(note)}
+                  />
+                </div>
+              ),
+            )
+          )}
         </div>
       </section>
     </div>

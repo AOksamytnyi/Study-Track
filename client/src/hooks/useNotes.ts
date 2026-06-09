@@ -17,6 +17,13 @@ export function useNotes(sessionId: number | null) {
   });
 }
 
+export function useAllNotes() {
+  return useQuery({
+    queryKey: notesQueryKey,
+    queryFn: () => getNotes(),
+  });
+}
+
 export function useCreateNote() {
   const queryClient = useQueryClient();
 

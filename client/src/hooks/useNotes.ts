@@ -6,6 +6,7 @@ import {
   updateNote,
   type UpdateNoteDto,
 } from "../api/note";
+import { toast } from "sonner";
 
 export const notesQueryKey = ["notes"] as const;
 
@@ -33,6 +34,7 @@ export function useCreateNote() {
       queryClient.invalidateQueries({
         queryKey: [...notesQueryKey, note.studySessionId],
       });
+      toast.success("Note created")
     },
   });
 }
@@ -47,6 +49,7 @@ export function useUpdateNote() {
       queryClient.invalidateQueries({
         queryKey: [...notesQueryKey, note.studySessionId],
       });
+      toast.success("Note updated")
     },
   });
 }
@@ -60,6 +63,7 @@ export function useDeleteNote() {
       queryClient.invalidateQueries({
         queryKey: [...notesQueryKey, variables.sessionId],
       });
+      toast.success("Note deleted")
     },
   });
 }

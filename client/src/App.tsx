@@ -7,10 +7,12 @@ import SessionDetails from "./pages/SessionDetails";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import { Toaster } from "sonner";
 
 export default function App() {
   return (
     <BrowserRouter>
+    <Toaster richColors position="bottom-right" />
       <Routes>
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />

@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { login, registerUser } from "../api/auth";
 import { useAuthStore, type User } from "../store/authStore";
 import { apiClient } from "../api/client";
+import { toast } from "sonner";
 
 export function useLogin() {
   const setAuth = useAuthStore((state) => state.login);
@@ -10,7 +11,8 @@ export function useLogin() {
     mutationFn: login,
 
     onSuccess: async (data) => {
-      handleAuthSuccess(data.token, setAuth);
+      await handleAuthSuccess(data.token, setAuth);
+      toast.success("You are authorized");
     },
   });
 }
@@ -22,7 +24,8 @@ export function useRegister() {
     mutationFn: registerUser,
 
     onSuccess: async (data) => {
-      handleAuthSuccess(data.token, setAuth);
+      await handleAuthSuccess(data.token, setAuth);
+       toast.success("You are registered")
     },
   });
 }

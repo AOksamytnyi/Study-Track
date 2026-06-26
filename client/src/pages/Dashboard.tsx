@@ -3,6 +3,11 @@ import { DashboardTopSessionCard } from "../components/DashboardTopSessionCard";
 import { PerformanceChart } from "../components/PerformanceChart";
 import { useDashboardStats } from "../hooks/useDashboardStats";
 import { useAuthStore } from "../store/authStore";
+import {
+  DashboardChartSkeleton,
+  DashboardMetricSkeleton,
+  DashboardTopSessionSkeleton,
+} from "../components/ui/Skeletons";
 
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
@@ -28,25 +33,37 @@ export default function Dashboard() {
         )}
 
         <div className="grid gap-7 lg:grid-cols-3">
-          <DashboardMetricCard
-            label="sessions"
-            value={isLoading ? 0 : stats.totalSessions}
-            variant="green"
-          />
-          <DashboardMetricCard
-            label="study hours"
-            value={isLoading ? 0 : stats.studyHours}
-            variant="blue"
-          />
-          <DashboardMetricCard
-            label="notes"
-            value={isLoading ? 0 : stats.totalNotes}
-            variant="yellow"
-          />
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <DashboardMetricSkeleton key={index} />
+            ))
+          ) : (
+            <>
+              <DashboardMetricCard
+                label="sessions"
+                value={stats.totalSessions}
+                variant="green"
+              />
+              <DashboardMetricCard
+                label="study hours"
+                value={stats.studyHours}
+                variant="blue"
+              />
+              <DashboardMetricCard
+                label="notes"
+                value={stats.totalNotes}
+                variant="yellow"
+              />
+            </>
+          )}
         </div>
 
         <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,2fr)_minmax(320px,0.9fr)]">
-          <PerformanceChart data={stats.performance} />
+          {isLoading ? (
+            <DashboardChartSkeleton />
+          ) : (
+            <PerformanceChart data={stats.performance} />
+          )}
 
           <aside className="rounded-lg bg-white p-1">
             <h2 className="mb-4 font-roboto text-[26px] font-medium leading-7 text-[#223759]">
@@ -55,9 +72,9 @@ export default function Dashboard() {
 
             <div className="flex flex-col gap-5">
               {isLoading ? (
-                <p className="rounded-lg bg-white p-4 text-sm font-light text-[#6f6f70] shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)]">
-                  Loading sessions...
-                </p>
+                Array.from({ length: 3 }).map((_, index) => (
+                  <DashboardTopSessionSkeleton key={index} />
+                ))
               ) : stats.topSessions.length > 0 ? (
                 stats.topSessions.map((session) => (
                   <DashboardTopSessionCard

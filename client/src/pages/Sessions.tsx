@@ -3,6 +3,8 @@ import { AddSessionButton } from "../components/AddSessionButton";
 import SessionCard from "../components/SessionCard";
 import { useState } from "react";
 import { useSessions } from "../hooks/useSessions";
+import { EmptyState } from "../components/ui/EmptyState";
+import { SessionCardSkeleton } from "../components/ui/Skeletons";
 
 function formatSessionDate(date: string) {
   return new Intl.DateTimeFormat("en", {
@@ -17,7 +19,7 @@ export default function Sessions() {
   const { data: sessions = [], isLoading } = useSessions();
 
   return (
-    <div className="flex flex-col gap-6 font-roboto">
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6 bg-white px-7 py-6 font-roboto">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="font-inter text-3xl font-semibold text-slate-800">
@@ -28,8 +30,7 @@ export default function Sessions() {
           </p>
         </div>
       </div>
-
-      <div className="flex flex-wrap gap-5">
+      <div className="flex flex-wrap gap-4">
         {isAddingSession ? (
           <AddSessionForm
             onCancel={() => setIsAddingSession(false)}
@@ -40,8 +41,17 @@ export default function Sessions() {
         )}
 
         {isLoading ? (
-          <div className="w-90.75 h-50 rounded-lg bg-white p-3.75 font-roboto text-neutral-500 shadow-[0px_0px_3px_1px_rgba(0,0,0,0.15)]">
-            Loading sessions...
+          Array.from({ length: 3 }).map((_, index) => (
+            <SessionCardSkeleton key={index} />
+          ))
+        ) : sessions.length === 0 ? (
+          <div className="flex items-center justify-center gap-5">
+            <div className="flex flex-col items-center gap-5">
+              <EmptyState
+                title="No sessions yet"
+                description="Create your first study session to start tracking progress."
+              />
+            </div>
           </div>
         ) : (
           sessions.map((session) => (

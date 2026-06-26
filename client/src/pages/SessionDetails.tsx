@@ -1,12 +1,24 @@
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useCreateSessionTag, useDeleteSessionTag, useSession, useUpdateSession } from "../hooks/useSessions";
+import {
+  useCreateSessionTag,
+  useDeleteSessionTag,
+  useSession,
+  useUpdateSession,
+} from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
 import { Tag } from "../components/Tag";
 import { Note } from "../components/Note";
 import { NoteForm } from "../components/NoteForm";
-import { useCreateNote, useDeleteNote, useNotes, useUpdateNote } from "../hooks/useNotes";
+import {
+  useCreateNote,
+  useDeleteNote,
+  useNotes,
+  useUpdateNote,
+} from "../hooks/useNotes";
 import type { Note as NoteModel } from "../api/note";
+import { LoadingState } from "../components/ui/LoadingState";
+import { EmptyState } from "../components/ui/EmptyState";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -69,7 +81,7 @@ export default function SessionDetails() {
   }
 
   if (isLoading) {
-    return <div className="font-roboto text-[#6f6f70]">Loading session...</div>;
+    return <LoadingState text="Loading session details" />
   }
 
   if (!session) {
@@ -140,7 +152,11 @@ export default function SessionDetails() {
   const saveDuration = async () => {
     const durationValue = Math.trunc(durationDraft);
 
-    if (!durationValue || durationValue < 1 || durationValue === session.duration) {
+    if (
+      !durationValue ||
+      durationValue < 1 ||
+      durationValue === session.duration
+    ) {
       setEditingField(null);
       setDurationDraft(session.duration);
       return;
@@ -483,7 +499,6 @@ export default function SessionDetails() {
               Add note
             </button>
           </div>
-
           {isAddingNote && (
             <div className="mb-2">
               <NoteForm
@@ -503,11 +518,12 @@ export default function SessionDetails() {
           )}
 
           {areNotesLoading ? (
-            <p className="py-6 text-sm font-light text-[#6f6f70]">
-              Loading notes...
-            </p>
+            <LoadingState text="Loading notes" />
           ) : notes.length === 0 && !isAddingNote ? (
-            <p className="py-6 text-sm font-light text-[#6f6f70]">no notes</p>
+            <EmptyState
+              title="No notes yet"
+              description="Create your first note to remember important information."
+            />
           ) : (
             notes.map((note) =>
               editingNoteId === note.id ? (

@@ -17,8 +17,8 @@ import {
   useUpdateNote,
 } from "../hooks/useNotes";
 import type { Note as NoteModel } from "../api/note";
-import { LoadingState } from "../components/ui/LoadingState";
 import { EmptyState } from "../components/ui/EmptyState";
+import { NoteSkeleton, SessionDetailsSkeleton } from "../components/ui/Skeletons";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -81,7 +81,7 @@ export default function SessionDetails() {
   }
 
   if (isLoading) {
-    return <LoadingState text="Loading session details" />
+    return <SessionDetailsSkeleton />;
   }
 
   if (!session) {
@@ -518,7 +518,10 @@ export default function SessionDetails() {
           )}
 
           {areNotesLoading ? (
-            <LoadingState text="Loading notes" />
+            <>
+              <NoteSkeleton />
+              <NoteSkeleton />
+            </>
           ) : notes.length === 0 && !isAddingNote ? (
             <EmptyState
               title="No notes yet"

@@ -1,20 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessions, updateSession, type CreateSessionTagDto, type UpdateSessionDto } from "../api/session";
+import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessions, updateSession, type CreateSessionTagDto, type SessionFilters, type UpdateSessionDto } from "../api/session";
 import { toast } from "sonner";
 
 export const sessionsQueryKey = ["sessions"] as const;
 
-export function useSessions() {
+export function useSessions(filters?: SessionFilters) {
   return useQuery({
-    queryKey: sessionsQueryKey,
-    queryFn: getSessions,
+    queryKey: [...sessionsQueryKey, filters],
+    queryFn:() => getSessions(filters),
   });
 }
 
 export function useSession(id: number | null) {
   return useQuery({
     queryKey: sessionsQueryKey,
-    queryFn: getSessions,
+    queryFn: () => getSessions(),
     enabled: id !== null,
     select: (sessions) => sessions.find((session) => session.id === id),
   });

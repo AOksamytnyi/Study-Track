@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useSessions } from "../hooks/useSessions";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SessionCardSkeleton } from "../components/ui/Skeletons";
+import { useSearchParams } from "react-router-dom";
+import type { SessionFilters } from "../api/session";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 function formatSessionDate(date: string) {
   return new Intl.DateTimeFormat("en", {
@@ -15,8 +18,17 @@ function formatSessionDate(date: string) {
 }
 
 export default function Sessions() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAddingSession, setIsAddingSession] = useState(false);
-  const { data: sessions = [], isLoading } = useSessions();
+
+  const search = searchParams.get("search") ?? "";
+
+  const debouncedSearch = useDebouncedValue(search);
+  const filters: SessionFilters = {
+    search: debouncedSearch,
+  };
+
+  const { data: sessions = [], isLoading } = useSessions(filters);
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6 bg-white px-7 py-6 font-roboto">
@@ -29,6 +41,26 @@ export default function Sessions() {
             Track what you studied and how much time it took.
           </p>
         </div>
+      </div>
+      <div className="flex gap-3">
+        <input
+          className="w-100 py-3.75 px-3 bg-[#F0F6FF] text-neutral-500 text-sm font-light rounded-lg"
+          type="text"
+          value={search}
+          onChange={(event) => {
+            const value = event.target.value;
+            setSearchParams((params) => {
+              if (value) {
+                params.set("search", value);
+              } else {
+                params.delete("search");
+              }
+
+              return params;
+            });
+          }}
+          placeholder="Search sessions..."
+        />
       </div>
       <div className="flex flex-wrap gap-4">
         {isAddingSession ? (
@@ -44,7 +76,7 @@ export default function Sessions() {
           Array.from({ length: 3 }).map((_, index) => (
             <SessionCardSkeleton key={index} />
           ))
-        ) : sessions.length === 0 ? (
+        ) : sessions.length === 0 && search === "" ? (
           <div className="flex items-center justify-center gap-5">
             <div className="flex flex-col items-center gap-5">
               <EmptyState

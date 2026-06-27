@@ -30,8 +30,20 @@ export async function createSession(req: Request, res: Response) {
 }
 
 export async function getSessions(req: Request, res: Response) {
+  const search =
+    typeof req.query.search === "string" ? req.query.search.trim() : "";
   const sessions = await prisma.studySession.findMany({
-    where: { userId: req.userId },
+    where: {
+      userId: req.userId,
+      ...(search
+        ? {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+    },
     include: {
       sessionTags: {
         include: {
@@ -59,7 +71,6 @@ export async function updateSession(req: Request, res: Response) {
   }
 
   const { title, description, date, duration, difficulty } = result.data;
-
 
   const session = await prisma.studySession.findUnique({
     where: { id: sessionId },

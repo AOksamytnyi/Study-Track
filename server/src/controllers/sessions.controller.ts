@@ -6,6 +6,9 @@ import {
   updateSessionSchema,
 } from "../schemas/session.schema";
 
+export type Difficulty = "easy" | "medium" | "hard"
+
+
 export async function createSession(req: Request, res: Response) {
   const result = createSessionSchema.safeParse(req.body);
 
@@ -32,6 +35,8 @@ export async function createSession(req: Request, res: Response) {
 export async function getSessions(req: Request, res: Response) {
   const search =
     typeof req.query.search === "string" ? req.query.search.trim() : "";
+
+  const difficulty: Difficulty = req.query.difficulty as Difficulty
   const sessions = await prisma.studySession.findMany({
     where: {
       userId: req.userId,
@@ -43,6 +48,7 @@ export async function getSessions(req: Request, res: Response) {
             },
           }
         : {}),
+        ...(difficulty ? {difficulty} : {})
     },
     include: {
       sessionTags: {

@@ -37,7 +37,8 @@ type ApiStudySession = Omit<StudySession, "tags"> & {
 
 export type SessionFilters = {
   search?: string;
-}
+  difficulty?: Difficulty
+} 
 function normalizeSession(session: ApiStudySession): StudySession {
   return {
     ...session,
@@ -54,6 +55,7 @@ export async function getSessions(filters?: SessionFilters) {
   const response = await apiClient.get<ApiStudySession[]>("/sessions", {
     params: {
       search: filters?.search || undefined,
+      difficulty: filters?.difficulty
     },
   });
   return response.data.map(normalizeSession);

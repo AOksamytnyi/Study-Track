@@ -22,10 +22,19 @@ export default function Sessions() {
   const [isAddingSession, setIsAddingSession] = useState(false);
 
   const search = searchParams.get("search") ?? "";
+  const selectedDifficulty = searchParams.get("difficulty") ?? "";
+
+  const difficulty =
+    selectedDifficulty === "easy" ||
+    selectedDifficulty === "medium" ||
+    selectedDifficulty === "hard"
+      ? selectedDifficulty
+      : undefined;
 
   const debouncedSearch = useDebouncedValue(search);
   const filters: SessionFilters = {
     search: debouncedSearch,
+    difficulty
   };
 
   const { data: sessions = [], isLoading } = useSessions(filters);
@@ -61,6 +70,28 @@ export default function Sessions() {
           }}
           placeholder="Search sessions..."
         />
+
+        <select
+          name="difficulty_select"
+          className="bg-[#F0F6FF] text-neutral-500 text-sm font-light rounded-lg py-3.75 px-3"
+          value={selectedDifficulty}
+          onChange={(event) => {
+            const value = event.target.value;
+
+            setSearchParams((params) => {
+              if (value) {
+                params.set("difficulty", value.toLowerCase());
+              } else {
+                params.delete("difficulty");
+              }
+              return params;
+            });
+          }}>
+          <option value="">All</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
       </div>
       <div className="flex flex-wrap gap-4">
         {isAddingSession ? (

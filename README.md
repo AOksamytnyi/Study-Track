@@ -88,3 +88,12 @@ npm run build
 ```
 
 Before deploying the API, make sure the production environment has `DATABASE_URL`, `JWT_SECRET`, and `PORT` configured.
+
+For a deployed frontend, set `VITE_API_URL` to the API URL. For a deployed API, set `CLIENT_URL` to the frontend URL so CORS accepts requests from the correct origin.
+
+Useful deployment commands:
+
+```bash
+npm --prefix server run migrate:deploy
+npm --prefix server run start
+```

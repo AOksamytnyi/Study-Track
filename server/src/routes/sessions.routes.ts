@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.middleware'
-import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessions, updateSession } from '../controllers/sessions.controller'
+import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessionTags, getSessions, updateSession } from '../controllers/sessions.controller'
 import { asyncHandler } from '../utils/async-handler'
 
 const sessionsRouter = Router()
@@ -9,6 +9,7 @@ sessionsRouter.use(authMiddleware) // применится ко всем роу�
 
 sessionsRouter.post('/', asyncHandler(createSession))
 sessionsRouter.get('/', asyncHandler(getSessions))
+sessionsRouter.get('/tags', asyncHandler(getSessionTags))
 sessionsRouter.post('/:id/tags', asyncHandler(createSessionTag))
 sessionsRouter.delete('/:id/tags/:tagId', asyncHandler(deleteSessionTag))
 sessionsRouter.patch('/:id', asyncHandler(updateSession))

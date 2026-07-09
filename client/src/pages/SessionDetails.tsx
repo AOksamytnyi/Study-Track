@@ -4,6 +4,7 @@ import {
   useCreateSessionTag,
   useDeleteSessionTag,
   useSession,
+  useSessionTags,
   useUpdateSession,
 } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
@@ -54,6 +55,7 @@ export default function SessionDetails() {
   const { id } = useParams();
   const sessionId = getSessionId(id);
   const { data: session, isLoading } = useSession(sessionId);
+  const { data: allTags = [] } = useSessionTags();
   const { data: notes = [], isLoading: areNotesLoading } = useNotes(sessionId);
   const updateSession = useUpdateSession();
   const createSessionTag = useCreateSessionTag();
@@ -103,6 +105,10 @@ export default function SessionDetails() {
   const isDeletingTag = deleteSessionTag.isPending;
   const isSavingNote =
     createNote.isPending || updateNote.isPending || deleteNote.isPending;
+  const sessionTagIds = new Set(session.tags.map((tag) => tag.id));
+  const availableExistingTags = allTags.filter(
+    (tag) => !sessionTagIds.has(tag.id),
+  );
 
   const saveTitle = async () => {
     const title = titleDraft.trim();
@@ -197,6 +203,24 @@ export default function SessionDetails() {
     } catch (error) {
       console.error(error);
       setTagError("Не удалось добавить тэг. Проверь, что сервер обновлён.");
+    }
+  };
+
+  const handleAttachExistingTag = async (tagId: number) => {
+    if (!tagId) {
+      return;
+    }
+
+    setTagError(null);
+
+    try {
+      await createSessionTag.mutateAsync({
+        sessionId: session.id,
+        data: { tagId },
+      });
+    } catch (error) {
+      console.error(error);
+      setTagError("Не удалось добавить существующий тэг. Попробуй ещё раз.");
     }
   };
 
@@ -447,31 +471,59 @@ export default function SessionDetails() {
             )}
           </div>
 
-          <form
-            onSubmit={handleCreateTag}
-            className="mt-1 flex flex-wrap items-end gap-3">
+          <div className="mt-1 flex flex-wrap items-end gap-3 rounded-lg border border-[#e3f2f3] bg-[#f8fbff] p-3">
             <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
-              New tag
-              <input
-                maxLength={20}
-                disabled={isCreatingTag}
-                value={tagName}
+              Existing tag
+              <select
+                disabled={isCreatingTag || availableExistingTags.length === 0}
+                value=""
                 onChange={(event) => {
-                  setTagName(event.target.value);
-                  setTagError(null);
+                  const tagId = Number(event.target.value);
+
+                  if (Number.isInteger(tagId) && tagId > 0) {
+                    void handleAttachExistingTag(tagId);
+                  }
                 }}
-                placeholder="Tag name"
-                className="h-9 w-45 border-b border-[#e3f2f3] bg-transparent text-sm font-light normal-case text-[#223759] outline-none placeholder:text-[#6f6f70]/60 focus:border-[#223759] disabled:opacity-60"
-              />
+                className="h-9 min-w-48 rounded-md border border-[#e3f2f3] bg-white px-3 text-sm font-light normal-case text-[#223759] outline-none focus:border-[#223759] disabled:opacity-60">
+                <option value="">
+                  {availableExistingTags.length > 0
+                    ? "Choose a tag"
+                    : "No tags to choose"}
+                </option>
+                {availableExistingTags.map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
             </label>
 
-            <button
-              disabled={isCreatingTag || !tagName.trim()}
-              type="submit"
-              className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-              {isCreatingTag ? "Adding..." : "Add tag"}
-            </button>
-          </form>
+            <form
+              onSubmit={handleCreateTag}
+              className="flex flex-wrap items-end gap-3">
+              <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
+                New tag
+                <input
+                  maxLength={20}
+                  disabled={isCreatingTag}
+                  value={tagName}
+                  onChange={(event) => {
+                    setTagName(event.target.value);
+                    setTagError(null);
+                  }}
+                  placeholder="Tag name"
+                  className="h-9 w-45 border-b border-[#e3f2f3] bg-transparent text-sm font-light normal-case text-[#223759] outline-none placeholder:text-[#6f6f70]/60 focus:border-[#223759] disabled:opacity-60"
+                />
+              </label>
+
+              <button
+                disabled={isCreatingTag || !tagName.trim()}
+                type="submit"
+                className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {isCreatingTag ? "Adding..." : "Create tag"}
+              </button>
+            </form>
+          </div>
 
           {tagError && (
             <p className="mt-2 text-sm font-medium text-[#9B4A4A]">

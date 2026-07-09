@@ -7,7 +7,7 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-78.5 flex flex-col bg-white text-[#5D7285]">
+    <aside className="fixed bottom-0 left-0 top-22.5 z-20 flex w-60.5 min-w-60.5 max-w-60.5 flex-none flex-col overflow-y-auto border-r border-gray-100 bg-white text-[#5D7285]">
       <div className="flex flex-col gap-2.5 font-poppins font-semibold text-sm px-8 py-6">
         {links.map((link) => (
           <SidebarLink

@@ -1,14 +1,14 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   useCreateSessionTag,
+  useDeleteSession,
   useDeleteSessionTag,
   useSession,
   useSessionTags,
   useUpdateSession,
 } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
-import { Tag } from "../components/Tag";
 import { Note } from "../components/Note";
 import { NoteForm } from "../components/NoteForm";
 import {
@@ -20,6 +20,7 @@ import {
 import type { Note as NoteModel } from "../api/note";
 import { EmptyState } from "../components/ui/EmptyState";
 import { NoteSkeleton, SessionDetailsSkeleton } from "../components/ui/Skeletons";
+import { SessionTagManager } from "../components/SessionTagManager";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -53,11 +54,13 @@ function getSessionId(value: string | undefined) {
 
 export default function SessionDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const sessionId = getSessionId(id);
   const { data: session, isLoading } = useSession(sessionId);
   const { data: allTags = [] } = useSessionTags();
   const { data: notes = [], isLoading: areNotesLoading } = useNotes(sessionId);
   const updateSession = useUpdateSession();
+  const deleteSession = useDeleteSession();
   const createSessionTag = useCreateSessionTag();
   const deleteSessionTag = useDeleteSessionTag();
   const createNote = useCreateNote();
@@ -101,6 +104,7 @@ export default function SessionDetails() {
 
   const difficulty = difficultyStyles[session.difficulty];
   const isSaving = updateSession.isPending;
+  const isDeletingSession = deleteSession.isPending;
   const isCreatingTag = createSessionTag.isPending;
   const isDeletingTag = deleteSessionTag.isPending;
   const isSavingNote =
@@ -288,11 +292,41 @@ export default function SessionDetails() {
     }
   };
 
+  const handleDeleteSession = async () => {
+    const shouldDelete = window.confirm(
+      `Delete "${session.title}" session? This action cannot be undone.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteSession.mutateAsync(session.id);
+      navigate("/sessions");
+    } catch (error) {
+      console.error(error);
+      setNoteError("Не удалось удалить сессию. Попробуй ещё раз.");
+    }
+  };
+
   return (
     <div className="font-roboto">
-      <h1 className="mb-5 font-nunito text-2xl font-semibold text-[#9a93b3]">
-        Session detail
-      </h1>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h1 className="font-nunito text-2xl font-semibold text-[#9a93b3]">
+          Session detail
+        </h1>
+
+        <button
+          type="button"
+          disabled={isDeletingSession}
+          onClick={handleDeleteSession}
+          aria-label="Delete session"
+          title="Delete session"
+          className="flex size-8 items-center justify-center rounded-full bg-[#9B1C1C] text-lg font-bold leading-none text-white shadow-[0px_2px_5px_rgba(0,0,0,0.18)] transition hover:bg-[#7F1D1D] disabled:cursor-not-allowed disabled:opacity-50">
+          x
+        </button>
+      </div>
 
       <section className="min-h-[967px] rounded-lg bg-white px-[30px] py-[30px]">
         <div className="flex justify-between">
@@ -452,85 +486,24 @@ export default function SessionDetails() {
 
         <div className="mt-[25px] h-px bg-[#e3f2f3]" />
 
-        <div className="flex flex-col gap-1 py-1">
-          <h3 className="font-roboto font-bold text-2xl text-[#223759]">
-            Tags
-          </h3>
-          <div className="flex flex-wrap gap-[15px] py-3">
-            {session.tags.length > 0 ? (
-              session.tags.map((tag) => (
-                <Tag
-                  key={tag.id}
-                  title={tag.name}
-                  disabled={isDeletingTag && deletingTagId === tag.id}
-                  onDelete={() => handleDeleteTag(tag.id)}
-                />
-              ))
-            ) : (
-              <span className="text-sm font-light text-[#6f6f70]">no tags</span>
-            )}
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-end gap-3 rounded-lg border border-[#e3f2f3] bg-[#f8fbff] p-3">
-            <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
-              Existing tag
-              <select
-                disabled={isCreatingTag || availableExistingTags.length === 0}
-                value=""
-                onChange={(event) => {
-                  const tagId = Number(event.target.value);
-
-                  if (Number.isInteger(tagId) && tagId > 0) {
-                    void handleAttachExistingTag(tagId);
-                  }
-                }}
-                className="h-9 min-w-48 rounded-md border border-[#e3f2f3] bg-white px-3 text-sm font-light normal-case text-[#223759] outline-none focus:border-[#223759] disabled:opacity-60">
-                <option value="">
-                  {availableExistingTags.length > 0
-                    ? "Choose a tag"
-                    : "No tags to choose"}
-                </option>
-                {availableExistingTags.map((tag) => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <form
-              onSubmit={handleCreateTag}
-              className="flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
-                New tag
-                <input
-                  maxLength={20}
-                  disabled={isCreatingTag}
-                  value={tagName}
-                  onChange={(event) => {
-                    setTagName(event.target.value);
-                    setTagError(null);
-                  }}
-                  placeholder="Tag name"
-                  className="h-9 w-45 border-b border-[#e3f2f3] bg-transparent text-sm font-light normal-case text-[#223759] outline-none placeholder:text-[#6f6f70]/60 focus:border-[#223759] disabled:opacity-60"
-                />
-              </label>
-
-              <button
-                disabled={isCreatingTag || !tagName.trim()}
-                type="submit"
-                className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-                {isCreatingTag ? "Adding..." : "Create tag"}
-              </button>
-            </form>
-          </div>
-
-          {tagError && (
-            <p className="mt-2 text-sm font-medium text-[#9B4A4A]">
-              {tagError}
-            </p>
-          )}
-        </div>
+        <SessionTagManager
+          sessionTags={session.tags}
+          availableTags={availableExistingTags}
+          tagName={tagName}
+          tagError={tagError}
+          isCreatingTag={isCreatingTag}
+          isDeletingTag={isDeletingTag}
+          deletingTagId={deletingTagId}
+          onTagNameChange={(value) => {
+            setTagName(value);
+            setTagError(null);
+          }}
+          onAttachExistingTag={(tagId) => {
+            void handleAttachExistingTag(tagId);
+          }}
+          onCreateTag={handleCreateTag}
+          onDeleteTag={handleDeleteTag}
+        />
 
         <div className="h-px bg-[#e3f2f3]" />
 

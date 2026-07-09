@@ -5,6 +5,42 @@ import {
   tagSchema,
   updateSessionSchema,
 } from "../schemas/session.schema";
+import {
+  getNumericParam,
+  getPositiveIntegerListParam,
+  getStringParam,
+} from "../utils/params";
+
+const sessionWithTags = {
+  sessionTags: {
+    include: {
+      tag: true,
+    },
+  },
+};
+
+function getDifficultyParam(value: unknown) {
+  return value === "easy" || value === "medium" || value === "hard"
+    ? value
+    : undefined;
+}
+
+function getSessionFilters(query: Request["query"]) {
+  return {
+    search: getStringParam(query.search),
+    difficulty: getDifficultyParam(query.difficulty),
+    tagIds: getPositiveIntegerListParam(query.tags),
+  };
+}
+
+function findUserSession(sessionId: number, userId: number) {
+  return prisma.studySession.findFirst({
+    where: {
+      id: sessionId,
+      userId,
+    },
+  });
+}
 
 export async function createSession(req: Request, res: Response) {
   const result = createSessionSchema.safeParse(req.body);
@@ -30,23 +66,7 @@ export async function createSession(req: Request, res: Response) {
 }
 
 export async function getSessions(req: Request, res: Response) {
-  const search =
-    typeof req.query.search === "string" ? req.query.search.trim() : "";
-
-  const difficulty =
-    req.query.difficulty === "easy" ||
-    req.query.difficulty === "medium" ||
-    req.query.difficulty === "hard"
-      ? req.query.difficulty
-      : undefined;
-
-  const tagIds =
-    typeof req.query.tags === "string"
-      ? req.query.tags
-          .split(",")
-          .map((tagId) => Number(tagId))
-          .filter((tagId) => Number.isInteger(tagId) && tagId > 0)
-      : [];
+  const { search, difficulty, tagIds } = getSessionFilters(req.query);
 
   const sessions = await prisma.studySession.findMany({
     where: {
@@ -75,13 +95,7 @@ export async function getSessions(req: Request, res: Response) {
           }
         : {}),
     },
-    include: {
-      sessionTags: {
-        include: {
-          tag: true,
-        },
-      },
-    },
+    include: sessionWithTags,
   });
 
   return res.json(sessions);
@@ -97,10 +111,9 @@ export async function getSessionTags(req: Request, res: Response) {
 }
 
 export async function updateSession(req: Request, res: Response) {
-  const id = req.params.id;
-  const sessionId = parseInt(id as string);
+  const sessionId = getNumericParam(req.params.id);
 
-  if (isNaN(sessionId)) {
+  if (sessionId === null) {
     return res.status(400).json({ message: "Invalid id" });
   }
 
@@ -112,11 +125,9 @@ export async function updateSession(req: Request, res: Response) {
 
   const { title, description, date, duration, difficulty } = result.data;
 
-  const session = await prisma.studySession.findUnique({
-    where: { id: sessionId },
-  });
+  const session = await findUserSession(sessionId, req.userId);
 
-  if (!session || session.userId !== req.userId) {
+  if (!session) {
     return res.status(404).json({ message: "Session not found" });
   }
 
@@ -129,19 +140,15 @@ export async function updateSession(req: Request, res: Response) {
 }
 
 export async function deleteSession(req: Request, res: Response) {
-  const id = req.params.id;
+  const sessionId = getNumericParam(req.params.id);
 
-  const sessionId = parseInt(id as string);
-
-  if (isNaN(sessionId)) {
+  if (sessionId === null) {
     return res.status(400).json({ message: "Invalid id" });
   }
 
-  const session = await prisma.studySession.findUnique({
-    where: { id: sessionId },
-  });
+  const session = await findUserSession(sessionId, req.userId);
 
-  if (!session || session.userId !== req.userId) {
+  if (!session) {
     return res.status(404).json({ message: "Session not found" });
   }
 
@@ -161,9 +168,9 @@ export async function deleteSession(req: Request, res: Response) {
 }
 
 export async function createSessionTag(req: Request, res: Response) {
-  const sessionId = parseInt(req.params.id as string);
+  const sessionId = getNumericParam(req.params.id);
 
-  if (isNaN(sessionId)) {
+  if (sessionId === null) {
     return res.status(400).json({ message: "Invalid id" });
   }
 
@@ -173,11 +180,9 @@ export async function createSessionTag(req: Request, res: Response) {
     return res.status(400).json({ message: result.error.issues });
   }
 
-  const session = await prisma.studySession.findUnique({
-    where: { id: sessionId },
-  });
+  const session = await findUserSession(sessionId, req.userId);
 
-  if (!session || session.userId !== req.userId) {
+  if (!session) {
     return res.status(404).json({ message: "Session not found" });
   }
 
@@ -234,18 +239,16 @@ export async function createSessionTag(req: Request, res: Response) {
 }
 
 export async function deleteSessionTag(req: Request, res: Response) {
-  const sessionId = parseInt(req.params.id as string);
-  const tagId = parseInt(req.params.tagId as string);
+  const sessionId = getNumericParam(req.params.id);
+  const tagId = getNumericParam(req.params.tagId);
 
-  if (isNaN(sessionId) || isNaN(tagId)) {
+  if (sessionId === null || tagId === null) {
     return res.status(400).json({ message: "Invalid id" });
   }
 
-  const session = await prisma.studySession.findUnique({
-    where: { id: sessionId },
-  });
+  const session = await findUserSession(sessionId, req.userId);
 
-  if (!session || session.userId !== req.userId) {
+  if (!session) {
     return res.status(404).json({ message: "Session not found" });
   }
 

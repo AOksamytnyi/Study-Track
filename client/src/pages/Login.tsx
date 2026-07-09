@@ -1,6 +1,5 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
 import { useLogin } from "../hooks/useAuth";
 
 type Inputs = {
@@ -10,7 +9,6 @@ type Inputs = {
 
 export default function Login() {
   const loginMutation = useLogin();
-  const setAuth = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const {
     register,
@@ -19,8 +17,7 @@ export default function Login() {
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      const response = await loginMutation.mutateAsync(data);
-      setAuth(response.token, response.user);
+      await loginMutation.mutateAsync(data);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);

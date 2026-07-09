@@ -1,15 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { createNoteSchema, updateNoteSchema } from "../schemas/note.schema";
-
-function getNumericParam(value: unknown) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const id = Number(value);
-  return Number.isNaN(id) ? null : id;
-}
+import { getNumericParam } from "../utils/params";
 
 export async function getNotes(req: Request, res: Response) {
   const sessionId = getNumericParam(req.query.sessionId as string | undefined);

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   useCreateSessionTag,
+  useDeleteSession,
   useDeleteSessionTag,
   useSession,
   useSessionTags,
@@ -53,11 +54,13 @@ function getSessionId(value: string | undefined) {
 
 export default function SessionDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const sessionId = getSessionId(id);
   const { data: session, isLoading } = useSession(sessionId);
   const { data: allTags = [] } = useSessionTags();
   const { data: notes = [], isLoading: areNotesLoading } = useNotes(sessionId);
   const updateSession = useUpdateSession();
+  const deleteSession = useDeleteSession();
   const createSessionTag = useCreateSessionTag();
   const deleteSessionTag = useDeleteSessionTag();
   const createNote = useCreateNote();
@@ -101,6 +104,7 @@ export default function SessionDetails() {
 
   const difficulty = difficultyStyles[session.difficulty];
   const isSaving = updateSession.isPending;
+  const isDeletingSession = deleteSession.isPending;
   const isCreatingTag = createSessionTag.isPending;
   const isDeletingTag = deleteSessionTag.isPending;
   const isSavingNote =
@@ -288,11 +292,41 @@ export default function SessionDetails() {
     }
   };
 
+  const handleDeleteSession = async () => {
+    const shouldDelete = window.confirm(
+      `Delete "${session.title}" session? This action cannot be undone.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteSession.mutateAsync(session.id);
+      navigate("/sessions");
+    } catch (error) {
+      console.error(error);
+      setNoteError("Не удалось удалить сессию. Попробуй ещё раз.");
+    }
+  };
+
   return (
     <div className="font-roboto">
-      <h1 className="mb-5 font-nunito text-2xl font-semibold text-[#9a93b3]">
-        Session detail
-      </h1>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h1 className="font-nunito text-2xl font-semibold text-[#9a93b3]">
+          Session detail
+        </h1>
+
+        <button
+          type="button"
+          disabled={isDeletingSession}
+          onClick={handleDeleteSession}
+          aria-label="Delete session"
+          title="Delete session"
+          className="flex size-8 items-center justify-center rounded-full bg-[#9B1C1C] text-lg font-bold leading-none text-white shadow-[0px_2px_5px_rgba(0,0,0,0.18)] transition hover:bg-[#7F1D1D] disabled:cursor-not-allowed disabled:opacity-50">
+          x
+        </button>
+      </div>
 
       <section className="min-h-[967px] rounded-lg bg-white px-[30px] py-[30px]">
         <div className="flex justify-between">

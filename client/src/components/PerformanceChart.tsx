@@ -102,10 +102,6 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
         <h2 className="font-nunito text-[26px] font-semibold text-[#0e2040]">
           Performance
         </h2>
-        <div className="flex h-[34px] items-center gap-3 rounded bg-[#238899]/20 px-4 font-nunito text-sm text-[#238899]">
-          This Week
-          <span className="size-0 border-x-[5px] border-t-[6px] border-x-transparent border-t-[#238899]" />
-        </div>
       </div>
 
       <div className="mb-2 flex justify-end">

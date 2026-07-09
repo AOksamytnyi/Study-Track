@@ -4,14 +4,14 @@ import { Outlet } from 'react-router-dom'
 
 export default function Layout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-8 bg-gray-50">
+      <Sidebar />
+      <main className="min-h-screen pl-55.5 pt-22.5">
+        <div className="p-8">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

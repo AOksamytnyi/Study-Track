@@ -8,7 +8,6 @@ import {
   useUpdateSession,
 } from "../hooks/useSessions";
 import type { Difficulty } from "../api/session";
-import { Tag } from "../components/Tag";
 import { Note } from "../components/Note";
 import { NoteForm } from "../components/NoteForm";
 import {
@@ -20,6 +19,7 @@ import {
 import type { Note as NoteModel } from "../api/note";
 import { EmptyState } from "../components/ui/EmptyState";
 import { NoteSkeleton, SessionDetailsSkeleton } from "../components/ui/Skeletons";
+import { SessionTagManager } from "../components/SessionTagManager";
 
 const difficultyStyles: Record<
   Difficulty,
@@ -452,85 +452,24 @@ export default function SessionDetails() {
 
         <div className="mt-[25px] h-px bg-[#e3f2f3]" />
 
-        <div className="flex flex-col gap-1 py-1">
-          <h3 className="font-roboto font-bold text-2xl text-[#223759]">
-            Tags
-          </h3>
-          <div className="flex flex-wrap gap-[15px] py-3">
-            {session.tags.length > 0 ? (
-              session.tags.map((tag) => (
-                <Tag
-                  key={tag.id}
-                  title={tag.name}
-                  disabled={isDeletingTag && deletingTagId === tag.id}
-                  onDelete={() => handleDeleteTag(tag.id)}
-                />
-              ))
-            ) : (
-              <span className="text-sm font-light text-[#6f6f70]">no tags</span>
-            )}
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-end gap-3 rounded-lg border border-[#e3f2f3] bg-[#f8fbff] p-3">
-            <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
-              Existing tag
-              <select
-                disabled={isCreatingTag || availableExistingTags.length === 0}
-                value=""
-                onChange={(event) => {
-                  const tagId = Number(event.target.value);
-
-                  if (Number.isInteger(tagId) && tagId > 0) {
-                    void handleAttachExistingTag(tagId);
-                  }
-                }}
-                className="h-9 min-w-48 rounded-md border border-[#e3f2f3] bg-white px-3 text-sm font-light normal-case text-[#223759] outline-none focus:border-[#223759] disabled:opacity-60">
-                <option value="">
-                  {availableExistingTags.length > 0
-                    ? "Choose a tag"
-                    : "No tags to choose"}
-                </option>
-                {availableExistingTags.map((tag) => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <form
-              onSubmit={handleCreateTag}
-              className="flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs font-medium uppercase text-[#6f6f70]">
-                New tag
-                <input
-                  maxLength={20}
-                  disabled={isCreatingTag}
-                  value={tagName}
-                  onChange={(event) => {
-                    setTagName(event.target.value);
-                    setTagError(null);
-                  }}
-                  placeholder="Tag name"
-                  className="h-9 w-45 border-b border-[#e3f2f3] bg-transparent text-sm font-light normal-case text-[#223759] outline-none placeholder:text-[#6f6f70]/60 focus:border-[#223759] disabled:opacity-60"
-                />
-              </label>
-
-              <button
-                disabled={isCreatingTag || !tagName.trim()}
-                type="submit"
-                className="h-9 rounded-md bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-                {isCreatingTag ? "Adding..." : "Create tag"}
-              </button>
-            </form>
-          </div>
-
-          {tagError && (
-            <p className="mt-2 text-sm font-medium text-[#9B4A4A]">
-              {tagError}
-            </p>
-          )}
-        </div>
+        <SessionTagManager
+          sessionTags={session.tags}
+          availableTags={availableExistingTags}
+          tagName={tagName}
+          tagError={tagError}
+          isCreatingTag={isCreatingTag}
+          isDeletingTag={isDeletingTag}
+          deletingTagId={deletingTagId}
+          onTagNameChange={(value) => {
+            setTagName(value);
+            setTagError(null);
+          }}
+          onAttachExistingTag={(tagId) => {
+            void handleAttachExistingTag(tagId);
+          }}
+          onCreateTag={handleCreateTag}
+          onDeleteTag={handleDeleteTag}
+        />
 
         <div className="h-px bg-[#e3f2f3]" />
 

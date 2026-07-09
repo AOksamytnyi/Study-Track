@@ -6,9 +6,6 @@ import {
   updateSessionSchema,
 } from "../schemas/session.schema";
 
-export type Difficulty = "easy" | "medium" | "hard"
-
-
 export async function createSession(req: Request, res: Response) {
   const result = createSessionSchema.safeParse(req.body);
 
@@ -36,7 +33,21 @@ export async function getSessions(req: Request, res: Response) {
   const search =
     typeof req.query.search === "string" ? req.query.search.trim() : "";
 
-  const difficulty: Difficulty = req.query.difficulty as Difficulty
+  const difficulty =
+    req.query.difficulty === "easy" ||
+    req.query.difficulty === "medium" ||
+    req.query.difficulty === "hard"
+      ? req.query.difficulty
+      : undefined;
+
+  const tagIds =
+    typeof req.query.tags === "string"
+      ? req.query.tags
+          .split(",")
+          .map((tagId) => Number(tagId))
+          .filter((tagId) => Number.isInteger(tagId) && tagId > 0)
+      : [];
+
   const sessions = await prisma.studySession.findMany({
     where: {
       userId: req.userId,
@@ -48,7 +59,21 @@ export async function getSessions(req: Request, res: Response) {
             },
           }
         : {}),
-        ...(difficulty ? {difficulty} : {})
+      ...(difficulty ? { difficulty } : {}),
+      ...(tagIds.length
+        ? {
+            sessionTags: {
+              some: {
+                tagId: {
+                  in: tagIds,
+                },
+                tag: {
+                  userId: req.userId,
+                },
+              },
+            },
+          }
+        : {}),
     },
     include: {
       sessionTags: {
@@ -60,6 +85,15 @@ export async function getSessions(req: Request, res: Response) {
   });
 
   return res.json(sessions);
+}
+
+export async function getSessionTags(req: Request, res: Response) {
+  const tags = await prisma.tag.findMany({
+    where: { userId: req.userId },
+    orderBy: { name: "asc" },
+  });
+
+  return res.json(tags);
 }
 
 export async function updateSession(req: Request, res: Response) {
@@ -148,22 +182,53 @@ export async function createSessionTag(req: Request, res: Response) {
   }
 
   const tag = await prisma.$transaction(async (tx) => {
-    const createdTag = await tx.tag.create({
-      data: {
-        name: result.data.name,
-        userId: req.userId,
-      },
+    const existingTag = result.data.tagId
+      ? await tx.tag.findFirst({
+          where: {
+            id: result.data.tagId,
+            userId: req.userId,
+          },
+        })
+      : await tx.tag.findFirst({
+          where: {
+            name: result.data.name,
+            userId: req.userId,
+          },
     });
 
-    await tx.sessionTag.create({
-      data: {
+    if (result.data.tagId && !existingTag) {
+      return null;
+    }
+
+    const tagToAttach =
+      existingTag ??
+      (await tx.tag.create({
+        data: {
+          name: result.data.name!,
+          userId: req.userId,
+        },
+      }));
+
+    await tx.sessionTag.upsert({
+      where: {
+        studySessionId_tagId: {
+          studySessionId: sessionId,
+          tagId: tagToAttach.id,
+        },
+      },
+      update: {},
+      create: {
         studySessionId: sessionId,
-        tagId: createdTag.id,
+        tagId: tagToAttach.id,
       },
     });
 
-    return createdTag;
+    return tagToAttach;
   });
+
+  if (!tag) {
+    return res.status(404).json({ message: "Tag not found" });
+  }
 
   return res.status(201).json(tag);
 }

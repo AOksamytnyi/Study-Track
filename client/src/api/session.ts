@@ -28,7 +28,8 @@ export type CreateSessionDto = {
 export type UpdateSessionDto = Partial<CreateSessionDto>
 
 export type CreateSessionTagDto = {
-  name: string;
+  name?: string;
+  tagId?: number;
 };
 
 type ApiStudySession = Omit<StudySession, "tags"> & {
@@ -37,8 +38,10 @@ type ApiStudySession = Omit<StudySession, "tags"> & {
 
 export type SessionFilters = {
   search?: string;
-  difficulty?: Difficulty
-} 
+  difficulty?: Difficulty;
+  tagIds?: number[];
+};
+
 function normalizeSession(session: ApiStudySession): StudySession {
   return {
     ...session,
@@ -55,10 +58,16 @@ export async function getSessions(filters?: SessionFilters) {
   const response = await apiClient.get<ApiStudySession[]>("/sessions", {
     params: {
       search: filters?.search || undefined,
-      difficulty: filters?.difficulty
+      difficulty: filters?.difficulty,
+      tags: filters?.tagIds?.length ? filters.tagIds.join(",") : undefined,
     },
   });
   return response.data.map(normalizeSession);
+}
+
+export async function getSessionTags() {
+  const response = await apiClient.get<SessionTag[]>("/sessions/tags");
+  return response.data;
 }
 
 export async function updateSession(id: number, data: UpdateSessionDto) {

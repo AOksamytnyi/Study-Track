@@ -1,13 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessions, updateSession, type CreateSessionTagDto, type SessionFilters, type UpdateSessionDto } from "../api/session";
+import { createSession, createSessionTag, deleteSession, deleteSessionTag, getSessionTags, getSessions, updateSession, type CreateSessionTagDto, type SessionFilters, type UpdateSessionDto } from "../api/session";
 import { toast } from "sonner";
 
 export const sessionsQueryKey = ["sessions"] as const;
+export const sessionTagsQueryKey = ["session-tags"] as const;
 
 export function useSessions(filters?: SessionFilters) {
   return useQuery({
     queryKey: [...sessionsQueryKey, filters],
     queryFn:() => getSessions(filters),
+  });
+}
+
+export function useSessionTags() {
+  return useQuery({
+    queryKey: sessionTagsQueryKey,
+    queryFn: getSessionTags,
   });
 }
 
@@ -70,6 +78,7 @@ export function useCreateSessionTag() {
     }) => createSessionTag(sessionId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: sessionTagsQueryKey });
       toast.success("Tag added")
     },
   });
@@ -88,6 +97,7 @@ export function useDeleteSessionTag() {
     }) => deleteSessionTag(sessionId, tagId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: sessionTagsQueryKey });
       toast.success("Tag deleted")
     },
   });

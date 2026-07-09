@@ -2,7 +2,7 @@ import { AddSessionForm } from "../components/AddSessionForm";
 import { AddSessionButton } from "../components/AddSessionButton";
 import SessionCard from "../components/SessionCard";
 import { useState } from "react";
-import { useSessions } from "../hooks/useSessions";
+import { useSessions, useSessionTags } from "../hooks/useSessions";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SessionCardSkeleton } from "../components/ui/Skeletons";
 import { useSearchParams } from "react-router-dom";
@@ -23,6 +23,10 @@ export default function Sessions() {
 
   const search = searchParams.get("search") ?? "";
   const selectedDifficulty = searchParams.get("difficulty") ?? "";
+  const selectedTagIds = (searchParams.get("tags") ?? "")
+    .split(",")
+    .map((tagId) => Number(tagId))
+    .filter((tagId) => Number.isInteger(tagId) && tagId > 0);
 
   const difficulty =
     selectedDifficulty === "easy" ||
@@ -34,10 +38,40 @@ export default function Sessions() {
   const debouncedSearch = useDebouncedValue(search);
   const filters: SessionFilters = {
     search: debouncedSearch,
-    difficulty
+    difficulty,
+    tagIds: selectedTagIds,
   };
 
   const { data: sessions = [], isLoading } = useSessions(filters);
+  const { data: tags = [] } = useSessionTags();
+  const hasActiveFilters =
+    search !== "" || selectedDifficulty !== "" || selectedTagIds.length > 0;
+  const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id));
+  const availableTags = tags.filter((tag) => !selectedTagIds.includes(tag.id));
+
+  const updateTagFilter = (nextTagIds: number[]) => {
+    setSearchParams((params) => {
+      if (nextTagIds.length) {
+        params.set("tags", nextTagIds.join(","));
+      } else {
+        params.delete("tags");
+      }
+
+      return params;
+    });
+  };
+
+  const addTagFilter = (tagId: number) => {
+    if (selectedTagIds.includes(tagId)) {
+      return;
+    }
+
+    updateTagFilter([...selectedTagIds, tagId]);
+  };
+
+  const removeTagFilter = (tagId: number) => {
+    updateTagFilter(selectedTagIds.filter((selectedTagId) => selectedTagId !== tagId));
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6 bg-white px-7 py-6 font-roboto">
@@ -92,7 +126,39 @@ export default function Sessions() {
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
+        <select
+          name="tag_select"
+          className="bg-[#F0F6FF] text-neutral-500 text-sm font-light rounded-lg py-3.75 px-3"
+          value=""
+          onChange={(event) => {
+            const tagId = Number(event.target.value);
+
+            if (Number.isInteger(tagId) && tagId > 0) {
+              addTagFilter(tagId);
+            }
+          }}>
+          <option value="">Filter by tag</option>
+          {availableTags.map((tag) => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
       </div>
+      {selectedTags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedTags.map((tag) => (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() => removeTagFilter(tag.id)}
+              className="rounded-full border border-black bg-black px-3 py-1 text-xs font-bold uppercase text-white transition hover:bg-neutral-800"
+              aria-label={`Remove ${tag.name} tag filter`}>
+              {tag.name} x
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap gap-4">
         {isAddingSession ? (
           <AddSessionForm
@@ -107,12 +173,16 @@ export default function Sessions() {
           Array.from({ length: 3 }).map((_, index) => (
             <SessionCardSkeleton key={index} />
           ))
-        ) : sessions.length === 0 && search === "" ? (
+        ) : sessions.length === 0 ? (
           <div className="flex items-center justify-center gap-5">
             <div className="flex flex-col items-center gap-5">
               <EmptyState
-                title="No sessions yet"
-                description="Create your first study session to start tracking progress."
+                title={hasActiveFilters ? "No sessions found" : "No sessions yet"}
+                description={
+                  hasActiveFilters
+                    ? "Try changing search, difficulty, or tag filters."
+                    : "Create your first study session to start tracking progress."
+                }
               />
             </div>
           </div>

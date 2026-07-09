@@ -11,5 +11,8 @@ export const createSessionSchema = z.object({
 export const updateSessionSchema = createSessionSchema.partial()
 
 export const tagSchema = z.object({
-    name: z.string().min(1).max(20)
+    name: z.string().trim().min(1).max(20).optional(),
+    tagId: z.coerce.number().int().positive().optional()
+}).refine((data) => data.name || data.tagId, {
+    message: "Tag name or tag id is required",
 })
